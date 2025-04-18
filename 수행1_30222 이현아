@@ -1,0 +1,119 @@
+# 1. 기본 구조 예측 룰 (리스트로 관리)
+helix_formers = ['A', 'L', 'M', 'Q', 'E', 'K', 'H']
+sheet_formers = ['V', 'I', 'Y', 'F', 'W', 'T']
+coil_formers  = ['G', 'P', 'S', 'D', 'N']
+
+# 2. 유전 질환 연관 변이 DB (딕셔너리로 관리)
+disease_db = {
+    (6, 'E', 'V'): {
+        "name": "겸상적혈구빈혈 (Sickle Cell Anemia)",
+        "notes": [
+            "산소 공급 보장",
+            "통증 관리",
+            "감염 예방 교육"
+        ]
+    },
+    (117, 'F', 'S'): {
+        "name": "낭포성 섬유증 (Cystic Fibrosis)",
+        "notes": [
+            "호흡기 관리",
+            "영양 공급",
+            "점액 배출 도움"
+        ]
+    },
+    # 예시: 더 많은 변이 데이터 추가
+    (89, 'C', 'Y'): {
+        "name": "유전성 유방암 (Hereditary Breast Cancer)",
+        "notes": [
+            "정기적인 유방검사",
+            "심리적 지원 제공",
+            "암 예방을 위한 생활 습관 관리"
+        ]
+    },
+    (320, 'R', 'Q'): {
+        "name": "알츠하이머 병 (Alzheimer's Disease)",
+        "notes": [
+            "인지 치료",
+            "환경적 요인 관리",
+            "기억력 개선 프로그램"
+        ]
+    }
+}
+
+# 3. 구조 예측 함수 (리스트 사용)
+def predict_secondary_structure(seq):
+    structure = []  # 구조를 저장할 리스트
+    for aa in seq:
+        if aa in helix_formers:
+            structure.append("H")  # Helix
+        elif aa in sheet_formers:
+            structure.append("E")  # Sheet
+        else:
+            structure.append("C")  # Coil
+    return ''.join(structure)
+
+# 4. 변이 비교 (리스트와 튜플을 사용)
+def compare_sequences(seq1, seq2):
+    if len(seq1) != len(seq2):
+        raise ValueError("서열 길이가 다릅니다. 비교할 수 없습니다.")
+
+    mutations = []  # 변이 위치를 저장할 리스트
+    for i, (aa1, aa2) in enumerate(zip(seq1, seq2), start=1):
+        if aa1 != aa2:
+            mutations.append((i, aa1, aa2))  # 변이 정보를 튜플로 저장
+    return mutations
+
+# 5. 질병 연관 확인 (변이 정보가 질병과 연결되는지 확인)
+def check_disease_links(mutations):
+    related = []  # 유전 질환과 연관된 변이 정보를 저장할 리스트
+    for pos, orig, mut in mutations:
+        key = (pos, orig, mut)  # 변이 정보를 튜플로 저장
+        if key in disease_db:
+            related.append((pos, disease_db[key]))  # 관련 질환 정보를 리스트에 저장
+    return related
+
+# 6. 결과 출력 함수 (리스트를 사용하여 변이 비교와 구조 출력)
+def print_results(seq1, seq2, struct1, struct2, mutations, disease_links):
+    print("\n🔬 원본 서열:     ", seq1)
+    print("🧬 비교 서열:     ", seq2)
+    print("📈 구조 예측(원본):", struct1)
+    print("📉 구조 예측(비교):", struct2)
+
+    if mutations:
+        print("\n🔍 변이된 위치:")
+        for pos, orig, mut in mutations:
+            print(f" - {pos}번째: {orig} → {mut}")
+
+        print("\n📌 구조 변화 위치:")
+        diff = [" " if a == b else "^" for a, b in zip(struct1, struct2)]
+        print("                     " + "".join(diff))
+    else:
+        print("\n✅ 두 서열은 완전히 동일합니다. 변이가 없습니다.")
+
+    if disease_links:
+        print("\n⚠️ 유전 질환 연관 변이 발견:")
+        for pos, info in disease_links:
+            print(f" - {pos}번째 변이 → 관련 질환: {info['name']}")
+            print("   🩺 간호 중재 예시:")
+            for note in info["notes"]:
+                print("     •", note)
+    else:
+        print("\n✅ 현재까지 알려진 유전 질환과 관련된 변이는 없습니다.")
+
+# 메인 실행
+if __name__ == "__main__":
+    print("💡 아미노산 서열 길이는 같아야 합니다.")
+    seq1 = input("🔡 원본 아미노산 서열을 입력하세요: ").strip().upper()
+    seq2 = input("🔡 비교할 아미노산 서열을 입력하세요: ").strip().upper()
+
+    try:
+        struct1 = predict_secondary_structure(seq1)
+        struct2 = predict_secondary_structure(seq2)
+        mutations = compare_sequences(seq1, seq2)
+        disease_links = check_disease_links(mutations)
+
+        print_results(seq1, seq2, struct1, struct2, mutations, disease_links)
+
+    except ValueError as e:
+        print("⚠️ 오류:", e)
+
